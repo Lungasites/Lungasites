@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Object Detection with COCO-SSD</title>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      text-align: center;
+      margin: 20px;
+      background-color: #f8f9fa;
+    }
+
+    h3 {
+      color: #007bff;
+    }
+
+    #image-container {
+      max-width: 60%;
+      margin: 15px auto;
+      border: 2px solid #007bff;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      border-radius: 15px;
+      background-color: #fff;
+    }
+
+    #image {
+      width: 60%;
+      height: auto;
+      display: block;
+      border-radius: 15px;
+    }
+
+    #results-container {
+      max-width: 70%;
+      margin: 20px auto;
+      padding: 10px;
+      background-color: #f5f5f5;
+      border: 2px solid #007bff;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: #007bff;
+    }
+
+    .loading-spinner {
+      border: 8px solid #007bff;
+      border-top: 8px solid #f5f5f5;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+      margin-bottom: 10px;
+    }
+
+    .loading-text {
+      margin-top: 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+</head>
+<body>
+  <h3>Object Detection with COCO-SSD</h3>
+  <div id="image-container">
+    <input type="file" accept="image/*" id="fileInput" />
+    <img id="image" alt="object detection" width="640" height="480" src="images/pergg.jpg" crossorigin="anonymous"/>
+  </div>
+  <div id="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading...</div>
+  </div>
+  <div id="results-container"></div>
+
+  <!-- Your existing HTML and script -->
+<script>
+  const imageElement = document.getElementById('image');
+  const fileInput = document.getElementById('fileInput');
+  const resultsContainer = document.getElementById('results-container');
+  const loadingDiv = document.getElementById('loading');
+
+  let model;
+
+  const loadModel = async () => {
+    try {
+      loadingDiv.style.display = 'block';
+      console.log("Model is loading...");
+
+      // Reset the model variable to allow for reloading
+      model = null;
+
+      // Load COCO-SSD model with a specific version
+      model = await cocoSsd.load({ version: '2.0.0' });
+
+      console.log("Model loaded Successfully!");
+      loadingDiv.style.display = 'none';
+    } catch (error) {
+      console.error("Error loading the model:", error);
+      loadingDiv.style.display = 'none';
+    }
+  }
+
+  const detectObjects = async () => {
+    resultsContainer.innerHTML = ''; // Clear previous results
+    console.log("Detecting objects...");
+
+    // Ensure the model is loaded before detecting objects
+    if (!model) {
+      await loadModel();
+    }
+
+    const predictions = await model.detect(imageElement);
+    console.log('Detected objects:', predictions);
+
+    // Display results in HTML
+    resultsContainer.innerHTML = '<h4>Detected Objects:</h4>';
+    predictions.forEach(prediction => {
+      resultsContainer.innerHTML += `<p>${prediction.class} (${Math.floor(prediction.score * 100)}%)</p>`;
+    });
+  }
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        imageElement.src = e.target.result;
+        console.log('Image source:', imageElement.src);
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  imageElement.onload = detectObjects;
+
+  // Initial load
+  loadModel();
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Predict dog breed</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        text-align: center;
+        margin: 20px;
+      }
+
+      h3 {
+        color: #333;
+      }
+
+      #image-container {
+        max-width: 50%;
+        margin: 10px auto;
+        border: 1px solid #ccc;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        border-radius: 10px;
+      }
+
+      #image {
+        width: 45%;
+        height: auto;
+        display: block;
+      }
+
+      #results-container {
+        max-width: 50%;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      #loading {
+        display: none;
+        margin-top: 20px;
+        font-size: 1.0em;
+      }
+
+      .loading-spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+        margin-top: 6px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+  </head>
+  <body>
+    <h3>Predicting and Classification</h3>
+    <div id="image-container">
+      <input type="file" accept="image/*" id="fileInput" onchange="loadImage()" />
+      <img id="image" alt="dog breed" src="images/defaultdog.jpg" crossorigin="anonymous"/>
+    </div>
+    <div id="loading" class="loading-spinner">Loading..</div>
+    <div id="results-container"></div>
+    
+    <script>
+      const imageElement = document.getElementById('image');
+      const fileInput = document.getElementById('fileInput');
+      const resultsContainer = document.getElementById('results-container');
+      const loadingDiv = document.getElementById('loading');
+
+      const predictBreed = async () => {
+        loadingDiv.style.display = 'block';
+        resultsContainer.innerHTML = ''; // Clear previous results
+        console.log("Model is loading...");
+        const model = await mobilenet.load();
+        loadingDiv.style.display = 'none';
+        console.log("Model loaded Successfully!");
+        const predictions = await model.classify(imageElement);
+        console.log('The dog in the picture could be: ', predictions);
+
+        // python -m http.server
+//Display results in HTML
+        resultsContainer.innerHTML = '<h4>Results:</h4>';
+        predictions.forEach(prediction => {
+          resultsContainer.innerHTML += `<p>${prediction.className}: ${Math.floor(prediction.probability * 100)}%</p>`;
+        });
+      }
+
+      const loadImage = () => {
+        const file = fileInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            imageElement.src = e.target.result;
+            predictBreed();
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      // Initial load
+      predictBreed();
+    </script>
+  </body>
+</html>
